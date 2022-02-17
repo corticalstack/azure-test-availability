@@ -2,7 +2,9 @@ import streamlit as st
 from streamlit.server.server import Server
 from streamlit.script_run_context import add_script_run_ctx
 import pandas as pd
+import subprocess
 import pyodbc
+import re
 #pyodbc.drivers()
 
 server = 'cs-test-availability-sql.database.windows.net'
@@ -11,6 +13,11 @@ username = 'azadmin'
 password = 'BeanieBoblets123'   
 driver= '{ODBC Driver 18 for SQL Server}'
 
+os_command = 'hostname'
+command_output = subprocess.Popen([os_command], stdout = subprocess.PIPE) 
+command_output = str(command_output.communicate())
+backend_host = re.findall(r"'([^'']*)'",command_output)[0]
+backend_host = backend_host.strip(r'\n')
 
 class App:
     def __init__(self):
@@ -52,10 +59,12 @@ class App:
         return headers
 
     def main(self):
-        st.title('Azure Test Availability')
+        st.title('Azure Test Zone Availability')
+        st.header('AdventureWorks Sales Order Headers')
         if not st.session_state.http_headers["site_host"]:
             st.session_state.http_headers = self._get_session_http_headers()
-        st.write("Web Host: ", st.session_state.http_headers["site_host"])
+        st.write("External Load Balancer Frontend Host: ", st.session_state.http_headers["site_host"])
+        st.write("Backend Pool VM Host: ", backend_host)
         st.dataframe(st.session_state["df_results"])  # Same as st.write(df)
 
 
